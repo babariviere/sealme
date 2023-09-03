@@ -11,9 +11,11 @@
   outputs = inputs @ {flake-parts, ...}:
     flake-parts.lib.mkFlake {inherit inputs;} {
       imports = [
+        inputs.flake-parts.flakeModules.easyOverlay
         inputs.treefmt-nix.flakeModule
       ];
       systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin"];
+
       perSystem = {
         config,
         self',
@@ -38,6 +40,8 @@
           modules = ./gomod2nix.toml;
         };
 
+        packages.sealme = config.packages.default;
+
         treefmt = {
           projectRootFile = ".git/config";
           programs = {
@@ -54,7 +58,12 @@
             gomod2nix
           ];
         };
+
+        overlayAttrs = {
+          inherit (config.packages) sealme;
+        };
       };
+
       flake = {
       };
     };
