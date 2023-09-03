@@ -9,11 +9,12 @@
   };
 
   outputs = inputs @ {flake-parts, ...}:
-    flake-parts.lib.mkFlake {inherit inputs;} {
+    flake-parts.lib.mkFlake {inherit inputs;} ({withSystem, ...}: {
       imports = [
         inputs.treefmt-nix.flakeModule
       ];
       systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin"];
+
       perSystem = {
         config,
         self',
@@ -38,6 +39,8 @@
           modules = ./gomod2nix.toml;
         };
 
+        packages.sealme = config.packages.default;
+
         treefmt = {
           projectRootFile = ".git/config";
           programs = {
@@ -55,7 +58,14 @@
           ];
         };
       };
+
       flake = {
+        overlays.default = final: prev:
+          withSystem prev.stdenv.hostPlatform.system (
+            {config, ...}: {
+              sealme = config.packages.sealme;
+            }
+          );
       };
-    };
+    });
 }
