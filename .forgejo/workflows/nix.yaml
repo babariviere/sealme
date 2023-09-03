@@ -11,8 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - run: apt-get update && apt-get install -y sudo
+    - run: mkdir /var/empty && chown root:root /var/empty && chmod 555 /var/empty
     - uses: cachix/install-nix-action@v22
       with:
-        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+        github_access_token: ${{ secrets.GH_TOKEN }}
     - run: nix build
     - run: nix flake check
