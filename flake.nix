@@ -33,13 +33,37 @@
 
         packages.default = pkgs.buildGoApplication {
           pname = "sealme";
-          version = "0.1";
+          version = "0.2.0";
           pwd = ./.;
           src = ./.;
           modules = ./gomod2nix.toml;
         };
 
         packages.sealme = config.packages.default;
+
+        packages.ksecret = let
+          build-inputs = with pkgs; [kubectl yq-go];
+          script = (pkgs.writeScriptBin "ksecret" (builtins.readFile ./scripts/ksecret.sh)).overrideAttrs (old: {
+            buildComamnd = "${old.buildCommand}\n patchShebangs $out";
+          });
+          completion-zsh =
+            pkgs.writeTextDir "share/zsh/site-functions/_ksecret"
+            ''
+              compdef _ksecret ksecret
+              _ksecret() {
+                  service=kubectl
+                  CURRENT+=2
+                  words="kubectl get secrets ''${words[@]:1}"
+                  _kubectl
+              }
+            '';
+        in
+          pkgs.symlinkJoin {
+            name = "ksecret";
+            paths = [script completion-zsh];
+            buildInputs = [pkgs.makeWrapper];
+            postBuild = "wrapProgram $out/bin/ksecret --prefix PATH : ${pkgs.lib.makeBinPath build-inputs}";
+          };
 
         treefmt = {
           projectRootFile = ".git/config";
@@ -64,6 +88,7 @@
           withSystem prev.stdenv.hostPlatform.system (
             {config, ...}: {
               sealme = config.packages.sealme;
+              ksecret = config.packages.ksecret;
             }
           );
       };
