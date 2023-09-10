@@ -10,7 +10,7 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - run: apt-get update && apt-get install -y sudo
     - run: mkdir /var/empty && chown root:root /var/empty && chmod 555 /var/empty
     - uses: cachix/install-nix-action@v23
